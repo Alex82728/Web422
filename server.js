@@ -14,7 +14,6 @@ Student ID: 105756233
 
 
 ********************************************************************************/ 
-
 const express = require('express');
 const app = express();
 const cors = require('cors');
@@ -107,9 +106,9 @@ db.initialize(process.env.MONGODB_CONN_STRING)
       }
     });
 
-    // Start the server
+    // Start the server and bind to 0.0.0.0
     const HTTP_PORT = process.env.PORT || 3000;
-    app.listen(HTTP_PORT, () => {
+    app.listen(HTTP_PORT, '0.0.0.0', () => {
       console.log(`Server is running on http://localhost:${HTTP_PORT}`);
     });
 
@@ -117,4 +116,3 @@ db.initialize(process.env.MONGODB_CONN_STRING)
   .catch((err) => {
     console.error('Database connection error:', err);
   });
-
