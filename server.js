@@ -18,6 +18,7 @@ const express = require('express');
 const app = express();
 const cors = require('cors');
 require('dotenv').config();
+const mongoose = require('mongoose');
 const ListingsDB = require("./modules/listingsDB.js");
 const db = new ListingsDB();
 
@@ -26,7 +27,13 @@ app.use(cors());
 app.use(express.json());
 
 // Initialize MongoDB connection
-db.initialize(process.env.MONGODB_CONN_STRING)
+const mongooseOptions = {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+  ssl: true,  // Explicitly enable SSL
+};
+
+db.initialize(process.env.MONGODB_CONN_STRING, mongooseOptions)
   .then(() => {
     console.log("Database initialized successfully");
 
