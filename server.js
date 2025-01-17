@@ -17,20 +17,32 @@ Student ID: 105756233
 
 const express = require('express');
 const app = express();
-
 const cors = require('cors');
 app.use(cors());
-
 require('dotenv').config();
-
 app.use(express.json());
 
-// Simple GET route
-app.get('/', (req, res) => {
-    res.json({ message: "API Listening" });
-});
+const ListingsDB = require("./modules/listingsDB.js"); // Correctly require the ListingsDB module
+const db = new ListingsDB();
 
-const PORT = 3000;
-app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
-});
+// Initialize the database connection
+db.initialize(process.env.MONGODB_CONN_STRING)
+  .then(() => {
+    // If successful, start the server
+    console.log("Database initialized successfully");
+
+    // Simple GET route
+    app.get('/', (req, res) => {
+      res.json({ message: "API Listening" });
+    });
+
+    // Additional routes can be added here once DB is connected
+
+    const PORT = 3000;
+    app.listen(PORT, () => {
+      console.log(`Server is running on http://localhost:${PORT}`);
+    });
+  })
+  .catch(err => {
+    console.error("Error initializing the database:", err);
+  });
