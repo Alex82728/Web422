@@ -18,7 +18,6 @@ const express = require('express');
 const app = express();
 const cors = require('cors');
 require('dotenv').config();
-const mongoose = require('mongoose');
 const ListingsDB = require("./modules/listingsDB.js");
 const db = new ListingsDB();
 
@@ -27,15 +26,14 @@ app.use(cors());
 app.use(express.json());
 
 // Initialize MongoDB connection
-const mongooseOptions = {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-  ssl: true,  // Explicitly enable SSL
-};
-
-db.initialize(process.env.MONGODB_CONN_STRING, mongooseOptions)
+db.initialize(process.env.MONGODB_CONN_STRING)
   .then(() => {
     console.log("Database initialized successfully");
+
+    // Root route
+    app.get('/', (req, res) => {
+      res.send('Welcome to the Listings API. Use /api/listings to interact with the API.');
+    });
 
     // Routes
 
@@ -113,9 +111,9 @@ db.initialize(process.env.MONGODB_CONN_STRING, mongooseOptions)
       }
     });
 
-    // Start the server and bind to 0.0.0.0
+    // Start the server
     const HTTP_PORT = process.env.PORT || 3000;
-    app.listen(HTTP_PORT, '0.0.0.0', () => {
+    app.listen(HTTP_PORT, () => {
       console.log(`Server is running on http://localhost:${HTTP_PORT}`);
     });
 
