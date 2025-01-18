@@ -15,10 +15,11 @@ Student ID: 105756233
 
 ********************************************************************************/ 
 const express = require('express');
-const app = express();
 const cors = require('cors');
 require('dotenv').config();
 const ListingsDB = require("./modules/listingsDB.js");
+
+const app = express();
 const db = new ListingsDB();
 
 // Middleware
@@ -36,37 +37,30 @@ db.initialize(process.env.MONGODB_CONN_STRING)
     });
 
     // Routes
-
-    // POST /api/listings - Create a new listing
     app.post('/api/listings', async (req, res) => {
       try {
         const newListing = await db.addNewListing(req.body);
-        res.status(201).json(newListing);  // Created
+        res.status(201).json(newListing);
       } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Failed to create listing' });
       }
     });
 
-    // GET /api/listings - Get all listings with pagination and optional name filter
     app.get('/api/listings', async (req, res) => {
       const { page, perPage, name } = req.query;
-
-      // Check if page and perPage are valid numbers
       if (isNaN(page) || isNaN(perPage)) {
         return res.status(400).json({ error: 'Invalid page or perPage value' });
       }
-
       try {
         const listings = await db.getAllListings(page, perPage, name);
-        res.status(200).json(listings);  // OK
+        res.status(200).json(listings);
       } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Failed to fetch listings' });
       }
     });
 
-    // GET /api/listings/:id - Get a specific listing by ID
     app.get('/api/listings/:id', async (req, res) => {
       const { id } = req.params;
       try {
@@ -74,14 +68,13 @@ db.initialize(process.env.MONGODB_CONN_STRING)
         if (!listing) {
           return res.status(404).json({ error: 'Listing not found' });
         }
-        res.status(200).json(listing);  // OK
+        res.status(200).json(listing);
       } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Failed to fetch listing' });
       }
     });
 
-    // PUT /api/listings/:id - Update a specific listing by ID
     app.put('/api/listings/:id', async (req, res) => {
       const { id } = req.params;
       try {
@@ -96,7 +89,6 @@ db.initialize(process.env.MONGODB_CONN_STRING)
       }
     });
 
-    // DELETE /api/listings/:id - Delete a specific listing by ID
     app.delete('/api/listings/:id', async (req, res) => {
       const { id } = req.params;
       try {
@@ -104,20 +96,24 @@ db.initialize(process.env.MONGODB_CONN_STRING)
         if (result.deletedCount === 0) {
           return res.status(404).json({ error: 'Listing not found' });
         }
-        res.status(204).send();  // No content (successful deletion)
+        res.status(204).send();
       } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Failed to delete listing' });
       }
     });
 
-    // Start the server
-    const HTTP_PORT = process.env.PORT || 3000;
-    app.listen(HTTP_PORT, () => {
-      console.log(`Server is running on http://localhost:${HTTP_PORT}`);
-    });
-
+    // Start the server only if running locally
+    if (!process.env.VERCEL) {
+      const PORT = process.env.PORT || 3000;
+      app.listen(PORT, () => {
+        console.log(`Server is running on http://localhost:${PORT}`);
+      });
+    }
   })
-  .catch((err) => {
+  .catch(err => {
     console.error('Database connection error:', err);
   });
+
+// Export the app as a handler for Vercel
+module.exports = app;
