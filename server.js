@@ -103,17 +103,15 @@ db.initialize(process.env.MONGODB_CONN_STRING)
       }
     });
 
-    // Start the server locally
-    if (!process.env.VERCEL) {
-      const PORT = process.env.PORT || 3000;
-      app.listen(PORT, () => {
-        console.log(`Server is running on http://localhost:${PORT}`);
-      });
-    }
+    // Handle favicon.ico requests
+    app.get('/favicon.ico', (req, res) => {
+      res.status(204).send(); // No content
+    });
+
   })
   .catch(err => {
     console.error('Database connection error:', err);
   });
 
-// Export the app for Vercel
+// Export the app for Vercel to handle as a serverless function
 module.exports = app;
