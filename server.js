@@ -103,7 +103,7 @@ db.initialize(process.env.MONGODB_CONN_STRING)
       }
     });
 
-    // Start the server only if running locally
+    // Start the server locally
     if (!process.env.VERCEL) {
       const PORT = process.env.PORT || 3000;
       app.listen(PORT, () => {
@@ -115,5 +115,5 @@ db.initialize(process.env.MONGODB_CONN_STRING)
     console.error('Database connection error:', err);
   });
 
-// Export the app as a handler for Vercel
+// Export the app for Vercel
 module.exports = app;
