@@ -17,7 +17,7 @@ Student ID: 105756233
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
-const ListingsDB = require("./modules/listingsDB.js");
+const ListingsDB = require('./modules/listingsDB.js');
 
 const app = express();
 const db = new ListingsDB();
@@ -29,7 +29,7 @@ app.use(express.json());
 // Initialize MongoDB connection
 db.initialize(process.env.MONGODB_CONN_STRING)
   .then(() => {
-    console.log("Database initialized successfully");
+    console.log('Database initialized successfully');
 
     // Root route
     app.get('/', (req, res) => {
@@ -103,15 +103,17 @@ db.initialize(process.env.MONGODB_CONN_STRING)
       }
     });
 
-    // Handle favicon.ico requests
-    app.get('/favicon.ico', (req, res) => {
-      res.status(204).send(); // No content
-    });
-
+    // Start the server (for local only)
+    if (process.env.NODE_ENV !== 'production') {
+      const PORT = process.env.PORT || 3000;
+      app.listen(PORT, () => {
+        console.log(`Server is running on http://localhost:${PORT}`);
+      });
+    }
   })
-  .catch(err => {
+  .catch((err) => {
     console.error('Database connection error:', err);
   });
 
-// Export the app for Vercel to handle as a serverless function
+// Export the app for Vercel
 module.exports = app;
