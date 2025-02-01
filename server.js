@@ -14,106 +14,87 @@ Student ID: 105756233
 
 
 ********************************************************************************/ 
-const express = require('express');
-const cors = require('cors');
-require('dotenv').config();
-const ListingsDB = require('./modules/listingsDB.js');
+const express = require("express");
+const cors = require("cors");
+const bodyParser = require("body-parser");
+const dataService = require("./modules/data-service.js");
+
+// Load dotenv variables
+require("dotenv").config({path:"./config/config.env"});
+
+const myData = dataService(`mongodb+srv://alexsandumd:349566695@cluster0.qcpkk.mongodb.net/myDatabase?retryWrites=true&w=majority`);
 
 const app = express();
-const db = new ListingsDB();
 
-// Middleware
 app.use(cors());
-app.use(express.json());
 
-// Initialize MongoDB connection
-db.initialize(process.env.MONGODB_CONN_STRING)
-  .then(() => {
-    console.log('Database initialized successfully');
+app.use(bodyParser.json());
 
-    // Root route
-    app.get('/', (req, res) => {
-      res.send('Welcome to the Listings API. Use /api/listings to interact with the API.');
+const HTTP_PORT = process.env.PORT || 8080;
+
+// API Routes
+
+// POST /api/listings 
+app.post("/api/listings", (req, res) => {
+    myData.addNewListing(req.body)
+        .then(() => {
+            res.status(201).json(`New listing successfully added`);
+        })
+        .catch((err) => {
+            res.status(400).json(err);
+        });
+});
+
+// GET /api/listings 
+app.get("/api/listings", (req, res) => {
+    myData.getAllListings(req.query.page, req.query.perPage)
+        .then((listings) => {
+            res.status(200).json(listings);
+        })
+        .catch((err) => {
+            res.status(400).json(err);
+        });
+});
+
+// GET /api/listings/:id 
+app.get("/api/listings/:id", (req, res) => {
+    myData.getListingById(req.params.id)
+        .then((listing) => {
+            res.status(200).json(listing);
+        })
+        .catch((err) => {
+            res.status(404).json(err);
+        });
+});
+
+// PUT /api/listings/:id 
+app.put("/api/listings/:id", (req, res) => {
+    myData.updateListingById(req.body, req.params.id)
+        .then(() => {
+            res.status(200).json(`Listing ${req.body._id} successfully updated`);
+        })
+        .catch((err) => {
+            res.status(404).json(err);
+        });
+});
+
+// DELETE /api/listings/:id 
+app.delete("/api/listings/:id", (req, res) => {
+    myData.deleteListingById(req.params.id)
+        .then(() => {
+            res.status(200).json(`Listing ${req.params.id} successfully deleted`);
+        })
+        .catch((err) => {
+            res.status(404).json(err);
+        });
+});
+
+// Initialize the Service & Start the Server
+
+myData.initialize().then(() => {
+    app.listen(HTTP_PORT, () => {
+        console.log(`Server listening on: ${HTTP_PORT}`);
     });
-
-    // Routes
-    app.post('/api/listings', async (req, res) => {
-      try {
-        const newListing = await db.addNewListing(req.body);
-        res.status(201).json(newListing);
-      } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Failed to create listing' });
-      }
-    });
-
-    app.get('/api/listings', async (req, res) => {
-      const { page, perPage, name } = req.query;
-      if (isNaN(page) || isNaN(perPage)) {
-        return res.status(400).json({ error: 'Invalid page or perPage value' });
-      }
-      try {
-        const listings = await db.getAllListings(page, perPage, name);
-        res.status(200).json(listings);
-      } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Failed to fetch listings' });
-      }
-    });
-
-    app.get('/api/listings/:id', async (req, res) => {
-      const { id } = req.params;
-      try {
-        const listing = await db.getListingById(id);
-        if (!listing) {
-          return res.status(404).json({ error: 'Listing not found' });
-        }
-        res.status(200).json(listing);
-      } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Failed to fetch listing' });
-      }
-    });
-
-    app.put('/api/listings/:id', async (req, res) => {
-      const { id } = req.params;
-      try {
-        const result = await db.updateListingById(req.body, id);
-        if (result.nModified === 0) {
-          return res.status(404).json({ error: 'Listing not found or no changes made' });
-        }
-        res.status(200).json({ message: 'Listing updated successfully' });
-      } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Failed to update listing' });
-      }
-    });
-
-    app.delete('/api/listings/:id', async (req, res) => {
-      const { id } = req.params;
-      try {
-        const result = await db.deleteListingById(id);
-        if (result.deletedCount === 0) {
-          return res.status(404).json({ error: 'Listing not found' });
-        }
-        res.status(204).send();
-      } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Failed to delete listing' });
-      }
-    });
-
-    // Start the server (for local only)
-    if (process.env.NODE_ENV !== 'production') {
-      const PORT = process.env.PORT || 3000;
-      app.listen(PORT, () => {
-        console.log(`Server is running on http://localhost:${PORT}`);
-      });
-    }
-  })
-  .catch((err) => {
-    console.error('Database connection error:', err);
-  });
-
-// Export the app for Vercel
-module.exports = app;
+}).catch((err) => {
+    console.log(err);
+});
