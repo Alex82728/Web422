@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const listingSchema = require("./modules/listingSchema");
+const listingSchema = require("./listingSchema");
 
 
 class ListingsDB {
