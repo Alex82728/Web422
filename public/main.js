@@ -1,104 +1,66 @@
 let listingData = [];
-
-// Page number
 let page = 1;
-
-// Items per page
 const perPage = 10;
 
-// Table template
-const listingTableTemplate = _.template(
-    `<% _.forEach(listingData, function(listing) { %>
-        <tr data-id=<%- listing._id %>>
-            <td><%- listing.customer.email %></td>
-            <td><%- listing.storeLocation %></td>
-            <td><%- listing.items.length %></td>
-            <td><%- moment.utc(listing.saleDate).local().format("LLLL") %></td>
-        </tr>
-    <% }); %>`
-);
+// Table template using Underscore.js
+const listingTableTemplate = _.template(`
+  <% _.forEach(listingData, function(listing) { %>
+    <tr data-id="<%- listing._id %>">
+      <td><%- listing.name %></td>
+      <td><%- listing.property_type %></td>
+      <td><%- listing.location ? listing.location.country : 'N/A' %></td>
+      <td><%- listing.summary %></td>
+    </tr>
+  <% }); %>
+`);
 
-// Modal template
-const listingModalBodyTemplate = _.template(
-    `<h4>Customer</h4>
-    <strong>email:</strong> <%- obj.customer.email %><br>
-    <strong>age:</strong> <%- obj.customer.age %><br>
-    <strong>satisfaction:</strong> <%- obj.customer.satisfaction %> / 5
-    <br><br>
-    <h4>Items: $<%- obj.total.toFixed(2) %></h4>
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Product Name</th>
-                <th>Quantity</th>
-                <th>Price</th>
-            </tr>
-        </thead>
-        <tbody>
-            <% _.forEach(obj.items, function(listing) { %>
-                <tr data-id=<%- listing._id %>>
-                    <td><%- listing.name %></td>
-                    <td><%- listing.quantity %></td>
-                    <td>$<%- listing.price %></td>
-                </tr>
-            <% }); %>
-        </tbody>
-    </table>`
-);
-
-// Function to populate listingData array
+// Function to load listings from the API
 function loadListingData() {
-    fetch(`https://arnin-web422-ass1.herokuapp.com/api/listings?page=${page}&perPage=${perPage}`)
-        .then((response) => {
-            return response.json();
-        })
-        .then((myJson) => {
-            listingData = myJson;
-            let rows = listingTableTemplate(listingData);
-            $("#listing-table tbody").html(rows);
-            $("#current-page").html(page);
-        })
+  fetch(`http://localhost:8080/api/listings?page=${page}&perPage=${perPage}`)
+    .then((response) => response.json())
+    .then((data) => {
+      listingData = data;
+      const rows = listingTableTemplate({ listingData });
+      document.querySelector("#listing-table tbody").innerHTML = rows;
+      document.querySelector("#current-page").textContent = page;
+    })
+    .catch((error) => {
+      console.error('Error fetching listings:', error);
+    });
 }
 
-// Clicked row
-$("#listing-table tbody").on("click", "tr", function(e) {
-    let clickedRow = $(this).attr("data-id");
-    let clickedListing = listingData.find(({ _id }) => _id == clickedRow);
-
-    // Add property total to clicked object
-    clickedListing.total = 0;
-
-    // For loop to sum the total of the listing, price * quantity
-    for (let i = 0; i < clickedListing.items.length; i++) {
-        clickedListing.total += clickedListing.items[i].price * clickedListing.items[i].quantity;
-    }
-
-    $("#listing-modal h4").html(`Listing: ${clickedListing._id}`);
-    $("#modal-body").html(listingModalBodyTemplate(clickedListing));
-
-    $('#listing-modal').modal({
-        backdrop: 'static',
-        keyboard: false
-    });
+// Clicked row event to show more details (you can customize this)
+document.querySelector("#listing-table tbody").addEventListener("click", function (e) {
+  if (e.target.tagName === "TD") {
+    const row = e.target.closest("tr");
+    const listingId = row.getAttribute("data-id");
+    const clickedListing = listingData.find((listing) => listing._id === listingId);
+    
+    // Display the details in a modal (assuming you have a modal setup)
+    document.querySelector("#modal-title").textContent = clickedListing.name;
+    document.querySelector("#modal-body").innerHTML = `
+      <p><strong>Price:</strong> $${clickedListing.price}</p>
+      <p><strong>Room Type:</strong> ${clickedListing.room_type}</p>
+      <p><strong>Location:</strong> ${clickedListing.address ? clickedListing.address.country : 'N/A'}</p>
+      <p><strong>Summary:</strong> ${clickedListing.summary}</p>
+    `;
+    
+    $('#listing-modal').modal('show');  // Assuming you are using Bootstrap modal
+  }
 });
 
-// Previous page button
-$("#previous-page").on("click", function(e) {
-    if (page > 1) {
-        page--;
-    }
+// Load listings on page load
+document.addEventListener('DOMContentLoaded', loadListingData);
+
+// Pagination functionality
+document.querySelector("#previous-page").addEventListener("click", function () {
+  if (page > 1) {
+    page--;
     loadListingData();
+  }
 });
 
-// Next page button
-$("#next-page").on("click", function(e) {
-    page++;
-    loadListingData();
-});
-
-// Document is ready
-$(function() {
-
-    // Load data into page
-    loadListingData();
+document.querySelector("#next-page").addEventListener("click", function () {
+  page++;
+  loadListingData();
 });
