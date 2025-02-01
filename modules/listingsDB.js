@@ -1,12 +1,10 @@
 const mongoose = require('mongoose');
-const listingSchema = require("./listingSchema");
-
+const listingSchema = require("./listingSchema");  // Corrected path
 
 class ListingsDB {
   constructor(connectionString) {
     this.connectionString = connectionString;
-   
-    this._listings = mongoose.model("listingsAndReviews", listingSchema, "listingsAndReviews");  
+    this._listings = mongoose.model("listingsAndReviews", listingSchema, "listingsAndReviews");
   }
 
   initialize() {

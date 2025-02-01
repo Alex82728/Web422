@@ -11,7 +11,6 @@ the course.
 Name: Alexandru Zaporojan
 Student ID: 105756233
 
-
 ********************************************************************************/
 
 const express = require("express");
@@ -21,10 +20,10 @@ const ListingsDB = require("./modules/listingsDB");
 const path = require("path");
 
 // Load dotenv variables
-require("dotenv").config(); // No need for path if the .env is in the root
+require("dotenv").config();
 
 const app = express();
-const myData = new ListingsDB(process.env.MONGODB_CONN_STRING); // Pass connection string from .env
+const myData = new ListingsDB(process.env.MONGODB_CONN_STRING); // Ensure .env contains MONGODB_CONN_STRING
 
 app.use(cors());
 app.use(bodyParser.json());
@@ -43,55 +42,69 @@ app.get("/", (req, res) => {
 
 // POST /api/listings
 app.post("/api/listings", (req, res) => {
+    console.log("POST /api/listings", req.body); // Debugging log
     myData.addNewListing(req.body)
         .then(() => {
-            res.status(201).json(`New listing successfully added`);
+            res.status(201).json({ message: "New listing successfully added" });
         })
         .catch((err) => {
+            console.error("Error adding listing:", err);
             res.status(400).json(err);
         });
 });
 
 // GET /api/listings
 app.get("/api/listings", (req, res) => {
-    myData.getAllListings(req.query.page, req.query.perPage)
+    console.log("GET /api/listings called"); // Debugging log
+    const page = parseInt(req.query.page) || 1;
+    const perPage = parseInt(req.query.perPage) || 10;
+
+    myData.getAllListings(page, perPage)
         .then((listings) => {
+            console.log("Retrieved listings count:", listings.length);
             res.status(200).json(listings);
         })
         .catch((err) => {
+            console.error("Error fetching listings:", err);
             res.status(400).json(err);
         });
 });
 
 // GET /api/listings/:id
 app.get("/api/listings/:id", (req, res) => {
+    console.log(`GET /api/listings/${req.params.id} called`); // Debugging log
     myData.getListingById(req.params.id)
         .then((listing) => {
             res.status(200).json(listing);
         })
         .catch((err) => {
+            console.error("Error fetching listing by ID:", err);
             res.status(404).json(err);
         });
 });
 
 // PUT /api/listings/:id
 app.put("/api/listings/:id", (req, res) => {
+    console.log(`PUT /api/listings/${req.params.id} called`, req.body); // Debugging log
     myData.updateListingById(req.body, req.params.id)
         .then(() => {
-            res.status(200).json(`Listing ${req.body._id} successfully updated`);
+            res.status(200).json({ message: `Listing ${req.params.id} successfully updated` });
         })
         .catch((err) => {
+            console.error("Error updating listing:", err);
             res.status(404).json(err);
         });
 });
 
 // DELETE /api/listings/:id
 app.delete("/api/listings/:id", (req, res) => {
+    console.log(`DELETE /api/listings/${req.params.id} called`); // Debugging log
     myData.deleteListingById(req.params.id)
         .then(() => {
-            res.status(200).json(`Listing ${req.params.id} successfully deleted`);
+            res.status(200).json({ message: `Listing ${req.params.id} successfully deleted` });
         })
         .catch((err) => {
+            console.error("Error deleting listing:", err);
             res.status(404).json(err);
         });
 });
@@ -105,5 +118,5 @@ myData.initialize()
         });
     })
     .catch((err) => {
-        console.log("Error initializing database:", err);
+        console.error("Error initializing database:", err);
     });
