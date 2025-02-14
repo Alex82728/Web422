@@ -1,21 +1,22 @@
-import { Card } from 'react-bootstrap';  // Import Card from react-bootstrap
-import Link from 'next/link';  // Import Link from Next.js
-import PageHeader from '@/components/PageHeader';  // Import PageHeader component
-import ListingDetails from '@/components/ListingDetails';  // Import ListingDetails component
+// pages/about.js
+import { Card } from 'react-bootstrap'; // Import Card component
+import Link from 'next/link'; // Import Link component from Next.js
+import PageHeader from '@/components/PageHeader'; // Import PageHeader component
+import ListingDetails from '@/components/ListingDetails'; // Import ListingDetails component
 
 // Fetch data during build time using getStaticProps
 export async function getStaticProps() {
-  const res = await fetch('https://web422-iu669sv7i-alexandrus-projects-cb24e18f.vercel.app/api/listings/10030955');  // Using the live API URL
+  const res = await fetch('https://web422-zxergpdbe-alexandrus-projects-cb24e18f.vercel.app/api/listings/10030955'); // Replace with your Vercel API URL and the listing ID
   const data = await res.json();
 
-  // Return the fetched data as props
   return {
     props: {
-      listing: data,  // The data from the API
+      listing: data, // The data from the API
     },
   };
 }
 
+// About Page Component
 export default function About({ listing }) {
   return (
     <div>
@@ -37,7 +38,7 @@ export default function About({ listing }) {
       <br />
 
       {/* Link to Listing */}
-      <Link href={`/listing/${listing.id}`} passHref legacyBehavior>
+      <Link href={`/listing/${listing._id}`} passHref legacyBehavior>
         <a>View the listing</a>
       </Link>
 
