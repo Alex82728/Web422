@@ -1,123 +1,107 @@
-let listingData = [];
-let page = 1;
-const perPage = 10;
+const listingsTableBody = document.querySelector("#listingsTable tbody");
+const previousPageBtn = document.querySelector("#previous-page");
+const nextPageBtn = document.querySelector("#next-page");
+const currentPageDisplay = document.querySelector("#current-page");
+const searchForm = document.querySelector("#searchForm");
+const clearFormBtn = document.querySelector("#clearForm");
 
-// Table template using Underscore.js
-const listingTableTemplate = _.template(`
-  <% _.forEach(listingData, function(listing) { %>
-    <tr data-id="<%- listing._id ? listing._id : '' %>">
-      <td><%- listing.name %></td>
-      <td><%- listing.property_type %></td>
-      <td><%- listing.address && listing.address.country ? listing.address.country : 'N/A' %></td>
-      <td><%- listing.summary %></td>
-    </tr>
-  <% }); %>
-`);
+let currentPage = 1;
+const perPage = 10; // Number of listings per page
+let searchName = null; // Stores search query
 
-// Function to load listings from the API
-function loadListingData() {
-  console.log("Fetching total listing count...");
+// Function to fetch listings and populate table
+async function fetchListings() {
+    try {
+        let url = `/api/listings?page=${currentPage}&perPage=${perPage}`;
+        if (searchName) {
+            url += `&name=${encodeURIComponent(searchName)}`; // Append search query
+        }
 
-  fetch("http://localhost:8080/api/listings/count")
-    .then((response) => response.json())
-    .then((countData) => {
-      console.log("API response for count:", countData);
+        const response = await fetch(url);
+        const listings = await response.json();
 
-      if (countData && typeof countData.count === "number") {
-        const totalListings = countData.count;
-        const totalPages = Math.ceil(totalListings / perPage);
-        updatePaginationControls(totalPages);
+        // Clear previous table rows
+        listingsTableBody.innerHTML = "";
 
-        console.log(`Fetching listings for page ${page}...`);
-        return fetch(`http://localhost:8080/api/listings?page=${page}&perPage=${perPage}`);
-      } else {
-        throw new Error("Invalid count data received.");
-      }
-    })
-    .then((response) => response.json())
-    .then((data) => {
-      console.log("API response for listings:", data);
+        // Check if listings are empty
+        if (listings.length === 0) {
+            listingsTableBody.innerHTML = "<tr><td colspan='4' class='text-center'>No listings found.</td></tr>";
+            return;
+        }
 
-      if (Array.isArray(data) && data.length > 0) {
-        listingData = data;
-        const rows = listingTableTemplate({ listingData });
-        document.querySelector("#listing-table tbody").innerHTML = rows;
-        document.querySelector("#current-page").textContent = `Page ${page}`;
-      } else {
-        console.warn("No listings found.");
-        document.querySelector("#listing-table tbody").innerHTML =
-          "<tr><td colspan='4'>No listings available</td></tr>";
-      }
-    })
-    .catch((error) => {
-      console.error("Error fetching listings:", error);
-    });
-}
+        // Populate the table with new data
+        listings.forEach(listing => {
+            const row = document.createElement("tr");
+            row.setAttribute("data-id", listing._id);
+            row.innerHTML = `
+                <td>${listing.name || "No Name"}</td>
+                <td>${listing.room_type || "N/A"}</td>
+                <td>${listing.address?.street || "Unknown Location"}</td>
+                <td>${listing.summary || "No Summary Available"}</td>
+            `;
+            listingsTableBody.appendChild(row);
 
-// Function to update pagination controls
-function updatePaginationControls(totalPages) {
-  document.querySelector("#previous-page").disabled = page <= 1;
-  document.querySelector("#next-page").disabled = page >= totalPages;
-}
+            // Add click event to open modal
+            row.addEventListener("click", () => fetchListingDetails(listing._id));
+        });
 
-// Pagination buttons
-document.querySelector("#previous-page").addEventListener("click", function () {
-  if (page > 1) {
-    page--;
-    loadListingData();
-  }
-});
-
-document.querySelector("#next-page").addEventListener("click", function () {
-  page++;
-  loadListingData();
-});
-
-// Search functionality
-document.querySelector("#searchBar").addEventListener("input", function () {
-  const searchTerm = this.value.toLowerCase();
-  console.log("Search term:", searchTerm);
-
-  const filteredListings = listingData.filter((listing) => {
-    return (
-      listing.name.toLowerCase().includes(searchTerm) ||
-      (listing.property_type && listing.property_type.toLowerCase().includes(searchTerm)) ||
-      (listing.address && listing.address.country && listing.address.country.toLowerCase().includes(searchTerm)) ||
-      (listing.summary && listing.summary.toLowerCase().includes(searchTerm))
-    );
-  });
-
-  console.log("Filtered Listings:", filteredListings);
-
-  const rows = listingTableTemplate({ listingData: filteredListings });
-  document.querySelector("#listing-table tbody").innerHTML = rows;
-});
-
-// Click event to handle listing selection
-document.querySelector("#listing-table tbody").addEventListener("click", function (e) {
-  if (e.target.tagName === "TD") {
-    const row = e.target.closest("tr");
-    const listingId = row.getAttribute("data-id");
-
-    console.log("Clicked row ID:", listingId); // Debugging
-
-    if (!listingId) {
-      console.warn("Row clicked but no valid ID found.");
-      return;
+        // Update current page display
+        currentPageDisplay.textContent = currentPage;
+    } catch (error) {
+        console.error("Error fetching listings:", error);
     }
+}
 
-    // Fetch listing details...
-    fetch(`http://localhost:8080/api/listings/${listingId}`)
-      .then((response) => response.json())
-      .then((data) => {
-        console.log("Listing details:", data);
-        alert(`Listing: ${data.name}\nType: ${data.property_type}\nLocation: ${data.address.country}`);
-      })
-      .catch((error) => {
+// Function to fetch & display individual listing details in modal
+async function fetchListingDetails(listingId) {
+    try {
+        const response = await fetch(`/api/listings/${listingId}`);
+        const listing = await response.json();
+
+        document.querySelector("#modal-title").textContent = listing.name || "Listing Details";
+        document.querySelector(".modal-body").innerHTML = `
+            <img id="photo" onerror="this.onerror=null;this.src='https://placehold.co/600x400?text=Photo+Not+Available'" 
+                 class="img-fluid w-100" src="${listing.images?.picture_url || 'https://placehold.co/600x400?text=Photo+Not+Available'}"><br><br>
+            <p>${listing.neighborhood_overview || "No neighborhood overview available."}</p>
+            <strong>Price:</strong> $${(listing.price || 0).toFixed(2)}<br>
+            <strong>Room:</strong> ${listing.room_type || "N/A"}<br>
+            <strong>Bed:</strong> ${listing.bed_type || "N/A"} (${listing.beds || "?"})<br>
+        `;
+
+        // Show modal
+        new bootstrap.Modal(document.getElementById("detailsModal")).show();
+    } catch (error) {
         console.error("Error fetching listing details:", error);
-      });
-  }
+    }
+}
+
+// Pagination controls
+previousPageBtn.addEventListener("click", () => {
+    if (currentPage > 1) {
+        currentPage--;
+        fetchListings();
+    }
 });
 
-// Load listings on page load
-document.addEventListener("DOMContentLoaded", loadListingData);
+nextPageBtn.addEventListener("click", () => {
+    currentPage++;
+    fetchListings();
+});
+
+// Handle search form submission
+searchForm.addEventListener("submit", (event) => {
+    event.preventDefault(); // Prevent default form submission
+    searchName = document.querySelector("#name").value.trim(); // Get search input
+    currentPage = 1; // Reset to page 1
+    fetchListings(); // Fetch new listings based on search
+});
+
+// Handle clear form button click
+clearFormBtn.addEventListener("click", () => {
+    document.querySelector("#name").value = ""; // Clear input field
+    searchName = null; // Reset search query
+    fetchListings(); // Reload full listing data
+});
+
+// Initial Fetch
+fetchListings();
