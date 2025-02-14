@@ -4,7 +4,9 @@ const listingSchema = require("./listingSchema");
 class ListingsDB {
   constructor(connectionString) {
     this.connectionString = connectionString;
-    this._listings = mongoose.model("listingsAndReviews", listingSchema, "listingsAndReviews");
+    
+    // Check if the model already exists
+    this._listings = mongoose.models.listingsAndReviews || mongoose.model("listingsAndReviews", listingSchema, "listingsAndReviews");
   }
 
   initialize() {

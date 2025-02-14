@@ -1,19 +1,26 @@
-// pages/api/listings/[id].js
-import ListingsDB from "../../../modules/listingsDB"; // Adjust path as needed
+// pages/listings/[id].js
+import { useRouter } from 'next/router';
+import useSWR from 'swr';
+import ListingDetails from '@/components/ListingDetails';
+import Error from 'next/error';
+import PageHeader from '@/components/PageHeader';
 
-const myData = new ListingsDB(process.env.MONGODB_CONN_STRING);
+export default function Listing() {
+  const router = useRouter();
+  const { id } = router.query;
 
-export default async function handler(req, res) {
-  const { id } = req.query;
+  const { data, error, isLoading } = useSWR(id ? `/api/listings/${id}` : null);
 
-  if (req.method === "GET") {
-    try {
-      const listing = await myData.getListingById(id);
-      res.status(200).json(listing);
-    } catch (error) {
-      res.status(404).json({ error: error.message });
-    }
-  } else {
-    res.status(405).json({ error: "Method Not Allowed" });
+  if (isLoading) return null;
+
+  if (error || !data) {
+    return <Error statusCode={404} />;
   }
+
+  return (
+    <div>
+      <PageHeader text={data.name} />
+      <ListingDetails listing={data} />
+    </div>
+  );
 }

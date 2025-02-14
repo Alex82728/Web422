@@ -1,14 +1,8 @@
-import { Card } from 'react-bootstrap';  // Import Card from react-bootstrap
-
+// components/PageHeader.js
 export default function PageHeader({ text }) {
   return (
-    <>
-      <Card className="bg-light">
-        <Card.Body>
-          {text}
-        </Card.Body>
-      </Card>
-      <br />
-    </>
+    <div className="text-center my-4">
+      <h1>{text}</h1>
+    </div>
   );
 }

@@ -1,29 +1,36 @@
-// pages/about.js
-import { Card } from 'react-bootstrap'; // Import Card component
-import Link from 'next/link'; // Import Link component from Next.js
-import PageHeader from '@/components/PageHeader'; // Import PageHeader component
-import ListingDetails from '@/components/ListingDetails'; // Import ListingDetails component
+import { Card } from 'react-bootstrap';
+import Link from 'next/link';
+import PageHeader from '@/components/PageHeader';
+import ListingDetails from '@/components/ListingDetails';
 
-// Fetch data during build time using getStaticProps
 export async function getStaticProps() {
-  const res = await fetch('https://web422-zxergpdbe-alexandrus-projects-cb24e18f.vercel.app/api/listings/10030955'); // Replace with your Vercel API URL and the listing ID
-  const data = await res.json();
+  try {
+    const res = await fetch('https://web422-zxergpdbe-alexandrus-projects-cb24e18f.vercel.app/api/listings/10030955');
+    const data = await res.json();
 
-  return {
-    props: {
-      listing: data, // The data from the API
-    },
-  };
+    return {
+      props: {
+        listing: data,
+      },
+    };
+  } catch (error) {
+    return {
+      props: {
+        listing: null,
+      },
+    };
+  }
 }
 
-// About Page Component
 export default function About({ listing }) {
+  if (!listing) {
+    return <p>Failed to load listing data.</p>;
+  }
+
   return (
     <div>
-      {/* Page Header Component */}
-      <PageHeader text="About the Developer - John Doe" />
+      <PageHeader text="About the Developer - Alexandru Zaporojan" />
 
-      {/* Developer Info */}
       <Card className="bg-light">
         <Card.Body>
           <p>
@@ -37,12 +44,12 @@ export default function About({ listing }) {
       </Card>
       <br />
 
-      {/* Link to Listing */}
-      <Link href={`/listing/${listing._id}`} passHref legacyBehavior>
+      {/* Link to the specific listing */}
+      <Link href={`/listing/${listing._id}`} passHref>
         <a>View the listing</a>
       </Link>
 
-      {/* Listing Details Component */}
+      {/* Display the ListingDetails component */}
       <ListingDetails listing={listing} />
     </div>
   );

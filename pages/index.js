@@ -1,26 +1,43 @@
-// pages/api/listings/index.js
-import ListingsDB from "../../../modules/listingsDB"; // Adjust path as needed
+// pages/index.js
+import useSWR from 'swr';
+import { useState, useEffect } from 'react';
+import { Pagination, Accordion } from 'react-bootstrap';
+import ListingDetails from '@/components/ListingDetails';
+import PageHeader from '@/components/PageHeader';
 
-const myData = new ListingsDB(process.env.MONGODB_CONN_STRING);
+export default function Home() {
+  const [page, setPage] = useState(1);
+  const [pageData, setPageData] = useState([]);
 
-export default async function handler(req, res) {
-  if (req.method === "GET") {
-    try {
-      const page = parseInt(req.query.page) || 1;
-      const perPage = parseInt(req.query.perPage) || 10;
-      const listings = await myData.getAllListings(page, perPage);
-      res.status(200).json(listings);
-    } catch (error) {
-      res.status(400).json({ error: error.message });
-    }
-  } else if (req.method === "POST") {
-    try {
-      await myData.addNewListing(req.body);
-      res.status(201).json({ message: "New listing successfully added" });
-    } catch (error) {
-      res.status(400).json({ error: error.message });
-    }
-  } else {
-    res.status(405).json({ error: "Method Not Allowed" });
-  }
+  const { data, error } = useSWR(`/api/listings?page=${page}&perPage=10`);
+
+  useEffect(() => {
+    if (data) setPageData(data);
+  }, [data]);
+
+  const previous = () => setPage((prev) => Math.max(prev - 1, 1));
+  const next = () => setPage((prev) => prev + 1);
+
+  return (
+    <div>
+      <PageHeader text="Browse Listings : Sorted by Number of Ratings" />
+      <Accordion>
+        {pageData.map((listing) => (
+          <Accordion.Item eventKey={listing._id} key={listing._id}>
+            <Accordion.Header>
+              <strong>{listing.name}</strong> - {listing.address.street}
+            </Accordion.Header>
+            <Accordion.Body>
+              <ListingDetails listing={listing} />
+            </Accordion.Body>
+          </Accordion.Item>
+        ))}
+      </Accordion>
+      <Pagination className="justify-content-center">
+        <Pagination.Prev onClick={previous} />
+        <Pagination.Item>{page}</Pagination.Item>
+        <Pagination.Next onClick={next} />
+      </Pagination>
+    </div>
+  );
 }
