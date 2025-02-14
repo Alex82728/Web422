@@ -12,21 +12,21 @@ Name: Alexandru Zaporojan
 Student ID: 105756233
 
 ********************************************************************************/
-
 const express = require("express");
 const cors = require("cors");
-const bodyParser = require("body-parser");
-const ListingsDB = require("./modules/listingsDB");
 const path = require("path");
+const ListingsDB = require("./modules/listingsDB");
 
 // Load dotenv variables
 require("dotenv").config();
+console.log("MONGODB_CONN_STRING:", process.env.MONGODB_CONN_STRING); // Debugging log
 
 const app = express();
 const myData = new ListingsDB(process.env.MONGODB_CONN_STRING); // Ensure .env contains MONGODB_CONN_STRING
 
+// Middleware
 app.use(cors());
-app.use(bodyParser.json());
+app.use(express.json());  // Replaced body-parser with express.json()
 
 // Serve static files from 'public' folder
 app.use(express.static(path.join(__dirname, "public")));
@@ -49,7 +49,7 @@ app.post("/api/listings", (req, res) => {
         })
         .catch((err) => {
             console.error("Error adding listing:", err);
-            res.status(400).json(err);
+            res.status(400).json({ error: err.message || err });
         });
 });
 
@@ -57,16 +57,16 @@ app.post("/api/listings", (req, res) => {
 app.get("/api/listings", (req, res) => {
     console.log("GET /api/listings called"); // Debugging log
     const page = parseInt(req.query.page) || 1;
-    const perPage = parseInt(req.query.perPage) || 10;
+    const perPage = parseInt(req.query.perPage) || 10;  // Default to 10 per page if not provided
 
     myData.getAllListings(page, perPage)
         .then((listings) => {
-            console.log("Retrieved listings count:", listings.length);
-            res.status(200).json(listings);
+            console.log("Retrieved listings count:", listings.length); // Check how many listings were retrieved
+            res.status(200).json(listings);  // Send the listings data as a response
         })
         .catch((err) => {
             console.error("Error fetching listings:", err);
-            res.status(400).json(err);
+            res.status(400).json({ error: err.message || err });
         });
 });
 
@@ -79,7 +79,7 @@ app.get("/api/listings/:id", (req, res) => {
         })
         .catch((err) => {
             console.error("Error fetching listing by ID:", err);
-            res.status(404).json(err);
+            res.status(404).json({ error: err.message || err });
         });
 });
 
@@ -92,7 +92,7 @@ app.put("/api/listings/:id", (req, res) => {
         })
         .catch((err) => {
             console.error("Error updating listing:", err);
-            res.status(404).json(err);
+            res.status(404).json({ error: err.message || err });
         });
 });
 
@@ -105,7 +105,20 @@ app.delete("/api/listings/:id", (req, res) => {
         })
         .catch((err) => {
             console.error("Error deleting listing:", err);
-            res.status(404).json(err);
+            res.status(404).json({ error: err.message || err });
+        });
+});
+
+// GET /api/listings/count
+app.get("/api/listings/count", (req, res) => {
+    console.log("GET /api/listings/count called"); // Debugging log
+    myData.getTotalListingsCount()
+        .then((count) => {
+            res.status(200).json({ count });
+        })
+        .catch((err) => {
+            console.error("Error fetching total listings count:", err);
+            res.status(400).json({ error: err.message || err });
         });
 });
 
