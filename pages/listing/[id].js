@@ -1,4 +1,3 @@
-// pages/listings/[id].js
 import { useRouter } from 'next/router';
 import useSWR from 'swr';
 import ListingDetails from '@/components/ListingDetails';
@@ -9,9 +8,13 @@ export default function Listing() {
   const router = useRouter();
   const { id } = router.query;
 
-  const { data, error, isLoading } = useSWR(id ? `/api/listings/${id}` : null);
+  const { data, error, isLoading } = useSWR(
+    id ? `https://web422-zxergpdbe-alexandrus-projects-cb24e18f.vercel.app/api/listings/${id}` : null
+  );
 
-  if (isLoading) return null;
+  if (isLoading) {
+    return null;
+  }
 
   if (error || !data) {
     return <Error statusCode={404} />;

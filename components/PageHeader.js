@@ -1,8 +1,11 @@
-// components/PageHeader.js
+import { Card } from 'react-bootstrap';
+
 export default function PageHeader({ text }) {
   return (
-    <div className="text-center my-4">
-      <h1>{text}</h1>
-    </div>
+    <Card className="bg-light mb-4">
+      <Card.Body>
+        <h1>{text}</h1>
+      </Card.Body>
+    </Card>
   );
 }

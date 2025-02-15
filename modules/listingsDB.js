@@ -4,119 +4,109 @@ const listingSchema = require("./listingSchema");
 class ListingsDB {
   constructor(connectionString) {
     this.connectionString = connectionString;
-    
-    // Check if the model already exists
     this._listings = mongoose.models.listingsAndReviews || mongoose.model("listingsAndReviews", listingSchema, "listingsAndReviews");
   }
 
-  initialize() {
-    return new Promise((resolve, reject) => {
-      mongoose.connect(this.connectionString)
-        .then(() => {
-          console.log('✅ Connected to MongoDB');
-          resolve();
-        })
-        .catch((err) => {
-          console.error("❌ Failed to connect to MongoDB:", err.message);
-          reject(err);
-        });
+  // Initialize database connection
+  async initialize() {
+    try {
+      await mongoose.connect(this.connectionString);
+      console.log('✅ Connected to MongoDB');
+    } catch (err) {
+      console.error("❌ Failed to connect to MongoDB:", err.message);
+      throw err;
+    }
 
-      mongoose.connection.on("disconnected", () => {
-        console.warn("⚠️ MongoDB disconnected!");
-      });
+    mongoose.connection.on("disconnected", () => {
+      console.warn("⚠️ MongoDB disconnected!");
     });
   }
 
-  getAllListings(page = 1, perPage = 10) {
-    return new Promise((resolve, reject) => {
-      this._listings.find()
+  // Get all listings with pagination
+  async getAllListings(page = 1, perPage = 10) {
+    try {
+      const listings = await this._listings.find()
         .skip((page - 1) * perPage)
-        .limit(perPage)
-        .then((listings) => resolve(listings))
-        .catch((err) => reject(err));
-    });
+        .limit(perPage);
+      return listings;
+    } catch (err) {
+      throw new Error(`Error fetching listings: ${err.message}`);
+    }
   }
 
-  getListingById(id) {
-    return new Promise((resolve, reject) => {
-      if (!id) {
-        return reject("ID is required");
+  // Get a listing by its ID
+  async getListingById(id) {
+    if (!id) {
+      throw new Error("ID is required");
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      throw new Error("Invalid ID format");
+    }
+
+    try {
+      const listing = await this._listings.findById(id);
+      if (!listing) {
+        throw new Error("Listing not found");
       }
+      return listing;
+    } catch (err) {
+      throw new Error(`Error fetching listing: ${err.message}`);
+    }
+  }
 
-      if (mongoose.Types.ObjectId.isValid(id)) {
-        this._listings.findById(id)
-          .then((listing) => {
-            if (listing) {
-              resolve(listing);
-            } else {
-              reject("Listing not found");
-            }
-          })
-          .catch((err) => reject(err));
-      } else {
-        this._listings.findOne({ _id: id })
-          .then((listing) => {
-            if (listing) {
-              resolve(listing);
-            } else {
-              reject("Listing not found");
-            }
-          })
-          .catch((err) => reject(err));
+  // Add a new listing
+  async addNewListing(listing) {
+    try {
+      const newListing = await this._listings.create(listing);
+      return newListing;
+    } catch (err) {
+      throw new Error(`Error adding listing: ${err.message}`);
+    }
+  }
+
+  // Update a listing by its ID
+  async updateListingById(updatedData, id) {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      throw new Error("Invalid ID format");
+    }
+
+    try {
+      const updatedListing = await this._listings.findByIdAndUpdate(id, updatedData, { new: true });
+      if (!updatedListing) {
+        throw new Error("Listing not found");
       }
-    });
+      return updatedListing;
+    } catch (err) {
+      throw new Error(`Error updating listing: ${err.message}`);
+    }
   }
 
-  addNewListing(listing) {
-    return new Promise((resolve, reject) => {
-      this._listings.create(listing)
-        .then((newListing) => resolve(newListing))
-        .catch((err) => reject(err));
-    });
-  }
+  // Delete a listing by its ID
+  async deleteListingById(id) {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      throw new Error("Invalid ID format");
+    }
 
-  updateListingById(updatedData, id) {
-    return new Promise((resolve, reject) => {
-      if (!mongoose.Types.ObjectId.isValid(id) && typeof id !== 'string') {
-        return reject("Invalid ID format");
+    try {
+      const result = await this._listings.findByIdAndDelete(id);
+      if (!result) {
+        throw new Error("Listing not found");
       }
-      
-      this._listings.findByIdAndUpdate(id, updatedData, { new: true })
-        .then((updatedListing) => {
-          if (updatedListing) {
-            resolve(updatedListing);
-          } else {
-            reject("Listing not found");
-          }
-        })
-        .catch((err) => reject(err));
-    });
+      return `Listing ${id} successfully deleted`;
+    } catch (err) {
+      throw new Error(`Error deleting listing: ${err.message}`);
+    }
   }
 
-  deleteListingById(id) {
-    return new Promise((resolve, reject) => {
-      if (!mongoose.Types.ObjectId.isValid(id) && typeof id !== 'string') {
-        return reject("Invalid ID format");
-      }
-
-      this._listings.findByIdAndDelete(id)
-        .then((result) => {
-          if (result) {
-            resolve(`Listing ${id} successfully deleted`);
-          } else {
-            reject("Listing not found");
-          }
-        })
-        .catch((err) => reject(err));
-    });
-  }
-
-  getTotalListingsCount() {
-    return new Promise((resolve, reject) => {
-      this._listings.countDocuments()
-        .then((count) => resolve(count))
-        .catch((err) => reject(err));
-    });
+  // Get total listings count
+  async getTotalListingsCount() {
+    try {
+      const count = await this._listings.countDocuments();
+      return count;
+    } catch (err) {
+      throw new Error(`Error fetching listings count: ${err.message}`);
+    }
   }
 }
 

@@ -1,0 +1,115 @@
+/* General Layout */
+.container {
+    padding: 20px;
+  }
+  
+  .page-header {
+    margin-bottom: 20px;
+  }
+  
+  .accordion-item {
+    margin-bottom: 10px;
+  }
+  
+  .accordion-header {
+    font-weight: bold;
+    background-color: #f1f1f1;
+    color: #333;
+    font-size: 1.2rem;
+    padding: 15px;
+  }
+  
+  .accordion-body {
+    padding: 20px;
+    background-color: #fff;
+  }
+  
+  .accordion-body p {
+    color: #555;
+    font-size: 1rem;
+  }
+  
+  /* Spinner */
+  .spinner-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+  }
+  
+  /* Pagination */
+  .pagination {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+  }
+  
+  .pagination .pagination-prev,
+  .pagination .pagination-next {
+    cursor: pointer;
+  }
+  
+  .pagination .pagination-prev[disabled],
+  .pagination .pagination-next[disabled] {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+  
+  /* Card Styling */
+  .card {
+    background-color: #f8f9fa;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+  }
+  
+  .card-body {
+    padding: 20px;
+  }
+  
+  .card-body p {
+    color: #333;
+    font-size: 1.1rem;
+  }
+  
+  /* Pagination Item Styling */
+  .pagination-item {
+    background-color: #007bff;
+    color: white;
+    border: 1px solid #007bff;
+  }
+  
+  .pagination-item:hover {
+    background-color: #0056b3;
+  }
+  
+  .pagination-prev,
+  .pagination-next {
+    padding: 0 10px;
+  }
+  
+  .pagination-prev[disabled],
+  .pagination-next[disabled] {
+    background-color: #ddd;
+    border-color: #ddd;
+    color: #888;
+  }
+  
+  /* Mobile and Tablet Responsiveness */
+  @media (max-width: 768px) {
+    .pagination {
+      font-size: 0.9rem;
+    }
+  
+    .accordion-header {
+      font-size: 1rem;
+    }
+  
+    .card-body {
+      padding: 15px;
+    }
+  
+    .container {
+      padding: 15px;
+    }
+  }
+  

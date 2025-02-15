@@ -1,6 +1,8 @@
-import Layout from "../components/Layout"; // Ensure the correct import path
-import { SWRConfig } from "swr";  
-import "../styles/main.css"; // Ensure styles are globally applied
+// pages/_app.js
+
+import Layout from '../components/Layout'; // Ensure the correct import path
+import { SWRConfig } from 'swr';  
+import '../styles/main.css'; // Ensure styles are globally applied
 import 'bootstrap/dist/css/bootstrap.min.css'; // Import Bootstrap CSS globally
 
 // Fetcher function to handle data fetching

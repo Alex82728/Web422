@@ -1,13 +1,21 @@
-import MainNav from "./MainNav";
-import { Container } from "react-bootstrap";
+import { SWRConfig } from 'swr';
+import MainNav from './MainNav';
+
+const fetcher = async (...args) => {
+  const response = await fetch(...args);
+
+  if (!response.ok) {
+    throw new Error(`Request failed with status: ${response.status}`);
+  }
+
+  return response.json();
+};
 
 export default function Layout({ children }) {
   return (
-    <>
+    <SWRConfig value={{ fetcher }}>
       <MainNav />
-      <Container className="mt-4">
-        {children}
-      </Container>
-    </>
+      <div className="container mt-5 pt-5">{children}</div>
+    </SWRConfig>
   );
 }
